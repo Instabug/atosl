@@ -1121,6 +1121,7 @@ int main(int argc, char *argv[]) {
     int option_index;
     int c;
     int found = 0;
+    int symbol_found = 0;
     uint32_t magic;
     cpu_type_t cpu_type = -1;
     cpu_subtype_t cpu_subtype = -1;
@@ -1290,8 +1291,8 @@ int main(int argc, char *argv[]) {
                          options.load_address - context.intended_addr, addr);
             }
 
-            if ((ret != DW_DLV_OK) && derr) {
-                printf("%s\n", argv[i]);
+            if ((ret == DW_DLV_OK) || !derr) {
+                symbol_found = 1;
             }
         }
 
@@ -1299,7 +1300,9 @@ int main(int argc, char *argv[]) {
 
         ret = dwarf_object_finish(dbg, &err);
         DWARF_ASSERT(ret, err);
-    } else {
+    }
+
+    if (!symbol_found) {
         for (i = optind; i < argc; i++) {
             Dwarf_Addr addr;
             errno = 0;
