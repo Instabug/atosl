@@ -360,8 +360,15 @@ struct dwarf_subprogram_t *read_from_globals(Dwarf_Debug dbg)
         ret = dwarf_lowpc(die, &lowpc, &err);
         DWARF_ASSERT(ret, err);
 
-        ret = dwarf_highpc(die, &highpc, &err);
+        Dwarf_Half form = NULL;
+        enum Dwarf_Form_Class class = 0;
+
+        ret = dwarf_highpc_b(die, &highpc, &form, &class, &err);
         DWARF_ASSERT(ret, err);
+
+        if (class == DW_FORM_CLASS_CONSTANT) {
+            highpc += lowpc;
+        }
 
         /* TODO: when would these not be defined? */
         if (lowpc && highpc) {
