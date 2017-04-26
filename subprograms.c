@@ -174,8 +174,15 @@ static struct dwarf_subprogram_t *read_cu_entry(
     rc = dwarf_lowpc(the_die, &lowpc, &err);
     DWARF_ASSERT(rc, err);
 
-    rc = dwarf_highpc(the_die, &highpc, &err);
+    Dwarf_Half form = NULL;
+    enum Dwarf_Form_Class class = 0;
+
+    rc = dwarf_highpc_b(the_die, &highpc, &form, &class, &err);
     DWARF_ASSERT(rc, err);
+
+    if (class == DW_FORM_CLASS_CONSTANT) {
+        highpc += lowpc;
+    }
 
     /* TODO: when would these not be defined? */
     if (lowpc && highpc) {
