@@ -354,6 +354,12 @@ struct dwarf_subprogram_t *read_from_globals(Dwarf_Debug dbg)
     if (ret != DW_DLV_OK)
         fatal("unable to get dwarf globals");
 
+    Dwarf_Addr **boundaries = malloc(nglobals * sizeof(Dwarf_Addr*));
+
+    for(i = 0; i < nglobals; ++i) {
+        boundaries[i] = calloc(2, sizeof(Dwarf_Addr));
+    }
+
     for (i = 0; i < nglobals; i++) {
         ret = dwarf_global_die_offset(globals[i], &offset, &err);
         DWARF_ASSERT(ret, err);
@@ -395,6 +401,26 @@ struct dwarf_subprogram_t *read_from_globals(Dwarf_Debug dbg)
                 DWARF_ASSERT(ret, err);
             }
 
+            /* check for duplicates */
+
+            int j;
+            int dup = 0;
+
+            for (j = 0; j < i; ++j) {
+                if (boundaries[j][0] == lowpc && boundaries[j][1] == highpc) {
+                    dup = 1;
+                } else {
+                    boundaries[j][0] = lowpc;
+                    boundaries[j][1] = highpc;
+                }
+
+                break;
+            }
+
+            if (dup == 1) {
+                continue;
+            }
+
             subprogram->lowpc = lowpc;
             subprogram->highpc = highpc;
             subprogram->name = name;
@@ -405,6 +431,12 @@ struct dwarf_subprogram_t *read_from_globals(Dwarf_Debug dbg)
 
         dwarf_dealloc(dbg, die, DW_DLA_DIE);
     }
+
+    for (i = 0; i < sizeof(boundaries); ++i) {
+        free(boundaries[i]);
+    }
+
+    free(boundaries);
 
     return subprograms;
 }
